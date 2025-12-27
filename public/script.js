@@ -40,6 +40,7 @@ function getStatusClass(productName) {
   const status = statusMap[productName];
   if (status === 'live') return 'status-live';
   if (status === 'maintenance') return 'status-maintenance';
+  if (status === 'checking') return 'status-loading';
   return 'status-loading';
 }
 
@@ -47,6 +48,7 @@ function getStatusText(productName) {
   const status = statusMap[productName];
   if (status === 'live') return 'Live';
   if (status === 'maintenance') return 'Maintenance';
+  if (status === 'checking') return 'Checking...';
   return 'Checking...';
 }
 
@@ -70,14 +72,18 @@ function renderProducts() {
 }
 
 async function checkAllStatuses() {
-  const promises = products.map(async (product) => {
+  // Render products immediately with "Checking..." status
+  products.forEach(product => {
+    statusMap[product.name] = 'checking';
+  });
+  renderProducts();
+  
+  // Then check each status and update individually
+  products.forEach(async (product) => {
     const status = await checkStatus(product);
     statusMap[product.name] = status;
-    return { name: product.name, status };
+    renderProducts(); // Re-render to update this product's status
   });
-  
-  await Promise.all(promises);
-  renderProducts();
 }
 
 // Initial load
